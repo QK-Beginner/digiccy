@@ -5,13 +5,14 @@ require 'vendor/autoload.php';
 use Leonis\Digiccy\Wallet;
 
 $config = [
-    'symbol'          => 'BTC',
-    'ip'              => '127.0.0.1',
-    'port'            => 20621,
+    'symbol'          => 'ETH',
+    'erc'             => 'six',
+    'ip'              => '49.4.64.171',
+    'port'            => 8545,
     'user'            => 'user',
     'password'        => 'password',
-    'wallet_password' => 'root',
+    'wallet_password' => '123456',
 ];
 
 $btc = new Wallet($config);
-print_r($btc->sendToAddress(['LMitmobUKgkx9VpZZnDs8hM1ERo6awEFQV', '0.1']));
+print_r($btc->getTransactionsByAddress('0xd2f87e219d7f94ecb89b2603d32ac2e618e634ca'));
