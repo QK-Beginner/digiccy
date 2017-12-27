@@ -6,20 +6,20 @@ use GuzzleHttp\Client;
 
 trait HttpRequest
 {
-    protected function post(array $config, $method, array $params)
+    protected function post(array $config, $method, array $params = [])
     {
         return (new Client())->post($config['ip'] . ':' . $config['port'], [
-            'auth' => [
+            'auth'    => [
                 $config['user'],
-                $config['password']
+                $config['password'],
             ],
             'headers' => [
-                'Content-Type' => 'application/json'
+                'Content-Type' => 'application/json',
             ],
-            'json' => [
+            'json'    => [
                 'method' => $method,
-                'params' => $params
-            ]
+                'params' => $params,
+            ],
         ]);
     }
 }
