@@ -51,10 +51,10 @@ class SMCGateway implements GatewayInterface
     {
         //直接请求区块浏览器查询
         $url = 'https://browser.achain.com/wallets/api/browser/act/contract/balance/query/'.'ACTM5hJFR1vFFYEJ35qZ7anoJTviefT5VkdB';
-        $client = new Client();
+        $client = new Client(['verify'=>false]);
         $response = $client->get($url);
         $balance = json_decode($response->getBody()->getContents(), true);
-        var_dump($balance);die;
+        return ['balance' => json_decode($balance['data'][0]['balance'])];
     }
 
     //获取地址余额包含已经转出的
