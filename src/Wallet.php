@@ -51,7 +51,6 @@ class Wallet
             $gatewayClassName = __NAMESPACE__ . '\Gateways\\' . $this->config['symbol'] . 'Gateway';
         }
 
-
         return new $gatewayClassName($this->config);
     }
 }
