@@ -85,8 +85,16 @@ class ETHGateway implements GatewayInterface
         $topic2   = substr($address, 2);
         $url      = "http://api.etherscan.io/api?module=logs&action=getLogs&fromBlock=0&toBlock=latest&address=" . $contract . "&topic0=" . $topic0 . "&topic0_2_opr=and&topic2=0x000000000000000000000000" . $topic2 . "&apikey=9AHCR6IJTB2H2MKBSRRZT9KHQKD1ETS8FX";
         $response = $this->get($url);
-
-        return json_decode($response->getBody()->getContents());
+        $content = json_decode($response->getBody()->getContents());
+        $transactions = [];
+        foreach ($content->result as $transaction){
+            array_push($transactions,[
+                'receivedAddress'=>'0x'.substr($transaction->topics[2],26),
+                'value'=>hexdec($transaction->data)/$info['decimal'],
+                'hash'=>$transaction->transactionHash,
+            ]);
+        }
+        return $transactions;
     }
 
     public function getEthTransactions($address)
@@ -107,7 +115,7 @@ class ETHGateway implements GatewayInterface
         }
         foreach ($transactions as $transaction) {
             if ($transaction->to === $address) {
-                array_push($received, $transaction);
+                array_push($received, []);
             }
         }
 

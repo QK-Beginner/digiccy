@@ -43,7 +43,14 @@ class Wallet
 
     protected function gateway()
     {
-        $gatewayClassName = __NAMESPACE__ . '\Gateways\\' . $this->config['symbol'] . 'Gateway';
+        if ($this->config['type'] == 1) {//btc
+            $gatewayClassName = __NAMESPACE__ . '\Gateways\BTCGateway';
+        } elseif ($this->config['type'] == 2) {//eth
+            $gatewayClassName = __NAMESPACE__ . '\Gateways\ETHGateway';
+        } else {
+            $gatewayClassName = __NAMESPACE__ . '\Gateways\\' . $this->config['symbol'] . 'Gateway';
+        }
+
 
         return new $gatewayClassName($this->config);
     }
