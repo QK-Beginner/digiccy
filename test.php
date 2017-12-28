@@ -11,7 +11,7 @@ $config = [
     'user'            => 'user',
     'password'        => 'password',
     'wallet_password' => '123456',
-    'erc'             => 'gec',
+    'erc'             => 'gec22',
 ];
 
 $btc = new Wallet($config);
