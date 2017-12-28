@@ -12,8 +12,22 @@ class ETHGateway implements GatewayInterface
 
     protected $config;
 
+    protected $type;
+
+    protected $info;
+
     public function __construct(array $config)
     {
+        //区分eth与erc
+        if (strtolower($config['symbol']) === 'eth') {
+            $this->type = 0;
+        } else {
+            $this->type = 1;
+            $this->info = $this->getErcInfo($config['symbol']);
+            if (!$this->info) {
+                exit('no symbol config');
+            }
+        }
         $this->config = $config;
     }
 
@@ -29,12 +43,8 @@ class ETHGateway implements GatewayInterface
 
     public function getTransactionsByAddress($address)
     {
-        if ($this->config['erc']) {//erc资产
-            $info = $this->getErcInfo($this->config['erc']);
-            if (!$info) {
-                exit('no symbol config');
-            }
-            $transactions = $this->getErcTransactions($address, $info['contract']);
+        if ($this->type) {//erc资产
+            $transactions = $this->getErcTransactions($address, $this->info['contract']);
         } else {//以太坊
             $transactions = $this->getEthTransactions($address);
         }
@@ -45,12 +55,8 @@ class ETHGateway implements GatewayInterface
     public function getAddressBalance(array $params = [])
     {
         $address = $params[0];
-        if ($this->config['erc']) {//erc资产
-            $info = $this->getErcInfo($this->config['erc']);
-            if (!$info) {
-                exit('no symbol config');
-            }
-            $url = 'https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=' . $info['contract'] . '&address=' . $address . '&tag=latest&apikey=YourApiKeyToken';
+        if ($this->type) {//erc资产
+            $url = 'https://api.etherscan.io/api?module=account&action=tokenbalance&contractaddress=' . $this->info['contract'] . '&address=' . $address . '&tag=latest&apikey=YourApiKeyToken';
         } else {//以太坊
             $url = 'https://api.etherscan.io/api?module=account&action=balance&address=' . $address . '&tag=latest&apikey=YourApiKeyToken';
         }
@@ -65,14 +71,9 @@ class ETHGateway implements GatewayInterface
 
     public function sendToAddress(array $params = [])
     {
-        if ($this->config['erc']) {//erc资产
-            $info = $this->getErcInfo($this->config['erc']);
-            if (!$info) {
-                exit('no symbol config');
-            }
-
+        if ($this->type) {//erc资产
             //发送erc20资产
-            return $this->sendErc($info, $params);
+            return $this->sendErc($params);
         } else {//以太坊
             //发送eth
             return $this->sendEth();
@@ -81,19 +82,20 @@ class ETHGateway implements GatewayInterface
 
     public function getErcTransactions($address, $contract)
     {
-        $topic0   = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
-        $topic2   = substr($address, 2);
-        $url      = "http://api.etherscan.io/api?module=logs&action=getLogs&fromBlock=0&toBlock=latest&address=" . $contract . "&topic0=" . $topic0 . "&topic0_2_opr=and&topic2=0x000000000000000000000000" . $topic2 . "&apikey=9AHCR6IJTB2H2MKBSRRZT9KHQKD1ETS8FX";
-        $response = $this->get($url);
-        $content = json_decode($response->getBody()->getContents());
+        $topic0       = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+        $topic2       = substr($address, 2);
+        $url          = "http://api.etherscan.io/api?module=logs&action=getLogs&fromBlock=0&toBlock=latest&address=" . $contract . "&topic0=" . $topic0 . "&topic0_2_opr=and&topic2=0x000000000000000000000000" . $topic2 . "&apikey=9AHCR6IJTB2H2MKBSRRZT9KHQKD1ETS8FX";
+        $response     = $this->get($url);
+        $content      = json_decode($response->getBody()->getContents());
         $transactions = [];
-        foreach ($content->result as $transaction){
-            array_push($transactions,[
-                'receivedAddress'=>'0x'.substr($transaction->topics[2],26),
-                'value'=>hexdec($transaction->data)/$info['decimal'],
-                'hash'=>$transaction->transactionHash,
+        foreach ($content->result as $transaction) {
+            array_push($transactions, [
+                'receivedAddress' => '0x' . substr($transaction->topics[2], 26),
+                'value'           => hexdec($transaction->data) / pow(10, $this->info['decimal']),
+                'hash'            => $transaction->transactionHash,
             ]);
         }
+
         return $transactions;
     }
 
@@ -122,14 +124,14 @@ class ETHGateway implements GatewayInterface
         return $received;
     }
 
-    protected function sendErc(array $info, array $params)
+    protected function sendErc(array $params)
     {
         $from    = $params[0];
         $receive = $params[1];
         $value   = $params[2];
 
         //初始化数字格式
-        $number = number_format($value * pow(10, $info['decimal']), 0, '', '');
+        $number = number_format($value * pow(10, $this->info['decimal']), 0, '', '');
         $url    = 'http://39.106.136.195:3000/index?dec=' . $number;//多位数转16进制接口
         $hex    = json_decode($this->get($url)->getBody()->getContents())->hex;
         if (!$hex) {
@@ -144,7 +146,7 @@ class ETHGateway implements GatewayInterface
 
         $response = $this->rpcPost($this->config, 'eth_sendTransaction', [[
             'from'  => $from,
-            'to'    => $info['contract'],//合约地址
+            'to'    => $this->info['contract'],//合约地址
             //'gasPrice' => '0x4e3b29200',//燃气费
             'value' => '0x0',
             'data'  => $data,
