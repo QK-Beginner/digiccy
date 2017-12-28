@@ -84,7 +84,11 @@ class BTCGateway implements GatewayInterface
         }
         foreach ($transactions as $transaction) {
             if ($transaction->category === 'receive') {
-                array_push($received, $transaction);
+                array_push($received, [
+                    'received' => $transaction->address,
+                    'value'    => $transaction->amount,
+                    'hash'     => $transaction->txid,
+                ]);
             }
         }
 
