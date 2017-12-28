@@ -31,17 +31,21 @@ trait HttpRequest
     //普通请求
     protected function rpcPost(array $config, $method, array $params = [])
     {
-        return (new Client())->post($config['ip'] . ':' . $config['port'], [
-            'headers' => [
-                'Content-Type' => 'application/json',
-            ],
-            'json'    => [
-                'jsonrpc' => '2.0',
-                'id'      => 1,
-                'method'  => $method,
-                'params'  => $params,
-            ],
-        ]);
+        try {
+            return (new Client())->post($config['ip'] . ':' . $config['port'], [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                ],
+                'json'    => [
+                    'jsonrpc' => '2.0',
+                    'id'      => 1,
+                    'method'  => $method,
+                    'params'  => $params,
+                ],
+            ]);
+        } catch (\Exception $exception) {
+            exit($exception->getMessage());
+        }
     }
 
     //get请求
