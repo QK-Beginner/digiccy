@@ -17,6 +17,8 @@ class ACTGateway implements GatewayInterface
     //生成新地址
     public function getNewAddress(array $params = [])
     {
+        //先解锁钱包
+        
         $response = $this->actRequest('', $params);
         $content  = json_decode($response->getBody()->getContents());
 
@@ -57,17 +59,20 @@ class ACTGateway implements GatewayInterface
     public function actRequest($method, array $params = [])
     {
         $config = $this->config;
-
-        return (new Client())->post('http::/' . $config['ip'] . ':' . $config['port'] . '/rpc', [
-            'headers' => [
-                'Content-Type'  => 'application/json',
-                'Authorization' => '000000' . base64_encode($config['user'] . ':' . $config['password']),
-            ],
-            'json'    => [
-                'method' => $method,
-                'params' => $params,
-            ],
-        ]);
+        try {
+            return (new Client())->post('http::/' . $config['ip'] . ':' . $config['port'] . '/rpc', [
+                'headers' => [
+                    'Content-Type'  => 'application/json',
+                    'Authorization' => '000000' . base64_encode($config['user'] . ':' . $config['password']),
+                ],
+                'json'    => [
+                    'method' => $method,
+                    'params' => $params,
+                ],
+            ]);
+        } catch (\Exception $exception) {
+            exit($exception->getMessage());
+        }
     }
 
 }
