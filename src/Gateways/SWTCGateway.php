@@ -5,7 +5,7 @@ namespace Leonis\Digiccy\Gateways;
 use Leonis\Digiccy\Contracts\GatewayInterface;
 use Leonis\Digiccy\Traits\HttpRequest;
 
-class SANCGateway implements GatewayInterface
+class SWTCGateway implements GatewayInterface
 {
     use HttpRequest;
 
@@ -18,25 +18,24 @@ class SANCGateway implements GatewayInterface
 
     public function getNewAddress(array $params = [])
     {
-        $response = $this->get('https://cw.sanchain.org/api/wallet/generate_wallet');
+        $response = $this->get('https://api.jingtum.com/v2/wallet/new');
         $content  = json_decode($response->getBody()->getContents());
 
-        return ['address' => $content->result->address, 'secret' => $content->result->seed];
+        return ['address' => $content->wallet->address, 'secret' => $content->wallet->secret];
     }
 
     public function getTransactionsByAddress($address)
     {
-        $response = $this->get('http://39.106.115.48/getTransferByAddress/' . $address);
+        $response = $this->get('https://api.jingtum.com/v2/accounts/' . $address . '/transactions?results_per_page=50');
         $content  = json_decode($response->getBody()->getContents());
+        if (!$content->success) exit(json_encode($content));
 
-        return ['transactions' => $this->dealTransactions($content->result)];
+        return ['transactions' => $this->dealTransactions($address, $content->transactions)];
     }
 
     public function getAddressBalance(array $params = [])
     {
-        $response = $this->get('https://cw.sanchain.org/api/wallet/balance?address=' . $params[0]);
-
-        return ['balance' => json_decode($response->getBody()->getContents())->result->balance];
+        //TODO::获取余额
     }
 
     public function getWalletBalance()
@@ -49,15 +48,18 @@ class SANCGateway implements GatewayInterface
 
     }
 
-    public function dealTransactions(array $transactions)
+    public function dealTransactions($address, array $transactions)
     {
         $received = [];
         foreach ($transactions as $transaction) {
-            array_push($received, [
-                'received' => $transaction->destination,
-                'value'    => $transaction->amount / 1000000,
-                'hash'     => $transaction->hash,
-            ]);
+            //过滤掉转出的
+            if ($transaction->type === 'received') {
+                array_push($received, [
+                    'received' => $address,
+                    'value'    => $transaction->amount,
+                    'hash'     => $transaction->hash,
+                ]);
+            }
         }
 
         return $received;
