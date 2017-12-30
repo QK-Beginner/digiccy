@@ -10,7 +10,7 @@ trait HttpRequest
     protected function post(array $config, $method, array $params = [])
     {
         try {
-            return (new Client())->post($config['ip'] . ':' . $config['port'], [
+            return (new Client())->post($config['ip'] . ':' . $config['port'] . '/' . $config['url'], [
                 'auth'    => [
                     $config['user'],
                     $config['password'],
@@ -19,8 +19,10 @@ trait HttpRequest
                     'Content-Type' => 'application/json',
                 ],
                 'json'    => [
-                    'method' => $method,
-                    'params' => $params,
+                    'jsonrpc' => '2.0',
+                    'id'      => 1,
+                    'method'  => $method,
+                    'params'  => $params,
                 ],
             ]);
         } catch (\Exception $exception) {
@@ -32,7 +34,7 @@ trait HttpRequest
     protected function rpcPost(array $config, $method, array $params = [])
     {
         try {
-            return (new Client())->post($config['ip'] . ':' . $config['port'], [
+            return (new Client())->post($config['ip'] . ':' . $config['port'] . '/' . $config['url'], [
                 'headers' => [
                     'Content-Type' => 'application/json',
                 ],
