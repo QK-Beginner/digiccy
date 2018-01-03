@@ -5,7 +5,7 @@ namespace Leonis\Digiccy\Gateways;
 use Leonis\Digiccy\Contracts\GatewayInterface;
 use Leonis\Digiccy\Traits\HttpRequest;
 
-class SANCGateway implements GatewayInterface
+class IPTGateway implements GatewayInterface
 {
     use HttpRequest;
 
@@ -13,20 +13,21 @@ class SANCGateway implements GatewayInterface
 
     public function __construct(array $config)
     {
+
         $this->config = $config;
     }
 
     public function getNewAddress(array $params = [])
     {
-        $response = $this->get('https://cw.sanchain.org/api/wallet/generate_wallet');
+        $response = $this->get('http://39.106.136.195/getAddress/' . $params[0]);
         $content  = json_decode($response->getBody()->getContents());
 
-        return ['address' => $content->result->address, 'secret' => $content->result->seed];
+        return ['address' => $content->result];
     }
 
     public function getTransactionsByAddress($address)
     {
-        $response = $this->get('http://39.106.115.48/getTransferByAddress/' . $address);
+        $response = $this->get('http://39.106.136.195/getTransfers/' . $address);
         $content  = json_decode($response->getBody()->getContents());
 
         return ['transactions' => $this->dealTransactions($content->result)];
@@ -34,9 +35,7 @@ class SANCGateway implements GatewayInterface
 
     public function getAddressBalance(array $params = [])
     {
-        $response = $this->get('https://cw.sanchain.org/api/wallet/balance?address=' . $params[0]);
 
-        return ['balance' => json_decode($response->getBody()->getContents())->result->balance];
     }
 
     public function getWalletBalance()
@@ -54,8 +53,8 @@ class SANCGateway implements GatewayInterface
         $received = [];
         foreach ($transactions as $transaction) {
             array_push($received, [
-                'received' => $transaction->destination,
-                'value'    => $transaction->amount / 1000000,
+                'received' => $transaction->address,
+                'value'    => $transaction->value,
                 'hash'     => $transaction->hash,
             ]);
         }

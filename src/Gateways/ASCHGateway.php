@@ -5,7 +5,7 @@ namespace Leonis\Digiccy\Gateways;
 use Leonis\Digiccy\Contracts\GatewayInterface;
 use Leonis\Digiccy\Traits\HttpRequest;
 
-class SANCGateway implements GatewayInterface
+class ASCHGateway implements GatewayInterface
 {
     use HttpRequest;
 
@@ -13,30 +13,29 @@ class SANCGateway implements GatewayInterface
 
     public function __construct(array $config)
     {
+
         $this->config = $config;
     }
 
     public function getNewAddress(array $params = [])
     {
-        $response = $this->get('https://cw.sanchain.org/api/wallet/generate_wallet');
+        $response = $this->get('http://39.104.13.117:8192/api/accounts/new');
         $content  = json_decode($response->getBody()->getContents());
 
-        return ['address' => $content->result->address, 'secret' => $content->result->seed];
+        return ['address' => $content->address, 'secret' => $content->secret];
     }
 
     public function getTransactionsByAddress($address)
     {
-        $response = $this->get('http://39.106.115.48/getTransferByAddress/' . $address);
-        $content  = json_decode($response->getBody()->getContents());
+        $url     = 'http://39.104.13.117:8192/api/transactions?recipientId=' . $address . '&orderBy=t_timestamp:desc&limit=100';
+        $content = json_decode($this->get($url)->getBody()->getContents());
 
-        return ['transactions' => $this->dealTransactions($content->result)];
+        return ['transactions' => $this->dealTransactions($content->transactions)];
     }
 
     public function getAddressBalance(array $params = [])
     {
-        $response = $this->get('https://cw.sanchain.org/api/wallet/balance?address=' . $params[0]);
 
-        return ['balance' => json_decode($response->getBody()->getContents())->result->balance];
     }
 
     public function getWalletBalance()
@@ -54,13 +53,12 @@ class SANCGateway implements GatewayInterface
         $received = [];
         foreach ($transactions as $transaction) {
             array_push($received, [
-                'received' => $transaction->destination,
-                'value'    => $transaction->amount / 1000000,
-                'hash'     => $transaction->hash,
+                'address' => $transaction->recipientId, //转入的账户
+                'value'   => $transaction->amount / 100000000,
+                'hash'    => $transaction->id,
             ]);
         }
 
         return $received;
     }
-
 }
