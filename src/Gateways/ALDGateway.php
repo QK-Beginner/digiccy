@@ -1,0 +1,71 @@
+<?php
+
+namespace Leonis\Digiccy\Gateways;
+
+use GuzzleHttp\Client;
+use Leonis\Digiccy\Contracts\GatewayInterface;
+use Leonis\Digiccy\Traits\HttpRequest;
+
+class ALDGateway implements GatewayInterface
+{
+    use HttpRequest;
+    protected $config;
+
+    public function __construct(array $config)
+    {
+        $this->config = $config;
+    }
+
+    //生成新地址
+    public function getNewAddress(array $params = [])
+    {
+        return ['address' => 'uncoinex.com'];
+    }
+
+    //根据地址获取转账记录
+    public function getTransactionsByAddress($userId)
+    {
+        $result = $this->rpcPost($this->config, 'get_relative_account_history', ['uncoinex.com', 1, 10000, 10000]);
+        $result = json_decode($result->getBody()->getContents(), true);
+        $unBackBlock = json_decode($this->rpcPost($this->config,'get_dynamic_global_properties',[])->getBody()->getContents(),true);
+        $unBackBlock = $unBackBlock['result']['last_irreversible_block_num'];
+        $received   = [];
+        foreach ($result['result'] as $item){
+            if ($item['op']['op'][0] != 0) continue;//转账
+            if ($item['op']['op'][1]['to'] != '1.2.76144') continue;//转入
+            if ($item['op']['block_num'] > $unBackBlock) continue;//不可撤回
+            if ($item['memo'] != $userId) continue; //备注是否为用户id
+            array_push($received,[
+                'address' => $item['op']['op'][1]['from'], //转入的账户
+                'value'   => $item['op']['op'][1]['amount']['amount'] / 100000,
+                'hash'    => $item['op']['id'],
+            ]);
+        }
+        return ['transactions' => $received];
+    }
+
+    //发送事物
+    public function sendToAddress(array $params = [])
+    {
+
+    }
+
+    //获取钱包可用总余额
+    public function getWalletBalance()
+    {
+
+    }
+
+    //获取地址余额包含已经转出的
+    public function getAddressBalance(array $params = [])
+    {
+
+    }
+
+    //过滤发送的交易
+    public function getReceived(array $transactions)
+    {
+
+    }
+
+}
