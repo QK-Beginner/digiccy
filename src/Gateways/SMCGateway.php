@@ -84,7 +84,6 @@ class SMCGateway implements GatewayInterface
                 'params' => $params,
                 'id'=>'1'
             ],
-
         ]);
     }
 

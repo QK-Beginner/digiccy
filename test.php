@@ -17,4 +17,4 @@ $config = [
 
 $btc = new Wallet($config);
 //print_r($btc->getNewAddress(['11']));die;
-print_r($btc->getTransactionsByAddress('1'));
+
