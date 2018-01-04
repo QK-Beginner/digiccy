@@ -18,7 +18,6 @@ class ACTGateway implements GatewayInterface
     public function getNewAddress(array $params = [])
     {
         //先解锁钱包
-        
         $response = $this->actRequest('', $params);
         $content  = json_decode($response->getBody()->getContents());
 

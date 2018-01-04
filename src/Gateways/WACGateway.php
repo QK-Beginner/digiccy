@@ -18,15 +18,15 @@ class WACGateway implements GatewayInterface
 
     public function getNewAddress(array $params = [])
     {
-        $response = $this->get('https://api.jingtum.com/v2/wallet/new');
+        $response = $this->get('http://47.104.65.174/transaction/tx/register-address');
         $content  = json_decode($response->getBody()->getContents());
 
-        return ['address' => $content->wallet->address, 'secret' => $content->wallet->secret];
+        return ['address' => $content->data->publicKey, 'secret' => $content->data->privateKey];
     }
 
     public function getTransactionsByAddress($address)
     {
-        $response = $this->get('https://api.jingtum.com/v2/accounts/' . $address . '/transactions?results_per_page=50');
+        $response = $this->get('http://39.106.136.195/' . $address . '/transactions?results_per_page=50');
         $content  = json_decode($response->getBody()->getContents());
         if (!$content->success) exit(json_encode($content));
 
