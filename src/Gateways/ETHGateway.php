@@ -6,6 +6,10 @@ use Leonis\Digiccy\Contracts\GatewayInterface;
 use Leonis\Digiccy\Traits\Help;
 use Leonis\Digiccy\Traits\HttpRequest;
 
+/**
+ * Class ETHGateway
+ * @package Leonis\Digiccy\Gateways
+ */
 class ETHGateway implements GatewayInterface
 {
     use HttpRequest, Help;
@@ -31,6 +35,12 @@ class ETHGateway implements GatewayInterface
         $this->config = $config;
     }
 
+    /**
+     * Get a new address.
+     *
+     * @param array $params
+     * @return mixed|void
+     */
     public function getNewAddress(array $params = [])
     {
         $wallet_password = ($this->config)['wallet_password'];

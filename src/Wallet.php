@@ -2,16 +2,31 @@
 
 namespace Leonis\Digiccy;
 
+/**
+ * Class Wallet
+ * @package Leonis\Digiccy
+ */
 class Wallet
 {
+    /**
+     * @var
+     */
     protected $config;
 
+    /**
+     * Wallet constructor.
+     * @param $config
+     */
     public function __construct($config)
     {
         $this->config = $config;
     }
 
-    //获取地址
+    /**
+     * Get a new address.
+     *
+     * @return mixed
+     */
     public function getNewAddress(array $params = [])
     {
         return $this->gateway()->getNewAddress($params);
@@ -41,6 +56,11 @@ class Wallet
         return $this->gateway()->sendToAddress($params);
     }
 
+    /**
+     * Get gateway instance.
+     *
+     * @return mixed
+     */
     protected function gateway()
     {
         if ($this->config['type'] == 1) {//btc

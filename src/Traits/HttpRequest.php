@@ -4,9 +4,20 @@ namespace Leonis\Digiccy\Traits;
 
 use GuzzleHttp\Client;
 
+/**
+ * Trait HttpRequest
+ * @package Leonis\Digiccy\Traits
+ */
 trait HttpRequest
 {
-    //bath_auth 请求
+    /**
+     * Make a post Request.
+     *
+     * @param array $config
+     * @param $method
+     * @param array $params
+     * @return \Psr\Http\Message\ResponseInterface
+     */
     protected function post(array $config, $method, array $params = [])
     {
         try {
