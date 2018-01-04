@@ -47,7 +47,12 @@ class ALDGateway implements GatewayInterface
     //发送事物
     public function sendToAddress(array $params = [])
     {
-
+        $response = $this->rpcPost($this->config, 'transfer',["uncoinex.com","$params[0]","$params[1]","ALD","$params[2]","true","0.12501","ALD"]);
+        $result = json_decode($response->getBody()->getContents(),true);
+        if($result){
+            $txid = $this->dealTransactionsOut($params[2]);
+            return ['txid'=>$txid];
+        }
     }
 
     //获取钱包可用总余额
@@ -66,6 +71,23 @@ class ALDGateway implements GatewayInterface
     public function getReceived(array $transactions)
     {
 
+    }
+
+    //过滤出转出交易哈希ID
+    /*
+     * $token  转账时的备注
+     * return $tx_id
+     * */
+    public function dealTransactionsOut($token)
+    {
+        $result = $this->rpcPost($this->config, 'get_relative_account_history', ['uncoinex.com', 1, 10000, 10000]);
+        $result = json_decode($result->getBody()->getContents(), true);
+        foreach ($result['result'] as $item){
+            if($item['memo']==$token){
+                return $item['op']['id'];
+                break;
+            }
+        }
     }
 
 }
