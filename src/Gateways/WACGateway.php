@@ -2,6 +2,7 @@
 
 namespace Leonis\Digiccy\Gateways;
 
+use GuzzleHttp\Client;
 use Leonis\Digiccy\Contracts\GatewayInterface;
 use Leonis\Digiccy\Traits\HttpRequest;
 
@@ -18,7 +19,7 @@ class WACGateway implements GatewayInterface
 
     public function getNewAddress(array $params = [])
     {
-        $response = $this->get('http://47.104.65.174/transaction/tx/register-address');
+        $response = $this->get('https://node02.wearechain.com/tx/register-address');
         $content  = json_decode($response->getBody()->getContents());
 
         return ['address' => $content->data->publicKey, 'secret' => $content->data->privateKey];
@@ -26,11 +27,10 @@ class WACGateway implements GatewayInterface
 
     public function getTransactionsByAddress($address)
     {
-        $response = $this->get('http://39.106.136.195/' . $address . '/transactions?results_per_page=50');
+        $response = $this->get('http://39.106.136.195:82/getTransfers/' . $address);
         $content  = json_decode($response->getBody()->getContents());
-        if (!$content->success) exit(json_encode($content));
 
-        return ['transactions' => $this->dealTransactions($address, $content->transactions)];
+        return ['transactions' => $this->dealTransactions($content->transfers)];
     }
 
     public function getAddressBalance(array $params = [])
@@ -45,21 +45,35 @@ class WACGateway implements GatewayInterface
 
     public function sendToAddress(array $params = [])
     {
+        $client   = new Client(['verify' => false]);
+        $response = $client->request('POST', 'https://node02.wearechain.com/tx/send', [
+            'json' => [
+                'from'        => $params['from'],
+                'to'          => $params['to'],
+                'private_key' => $params['key'],
+                'amount'      => $params['amount'],
+                'fee'         => '0.1',
+            ],
+        ]);
+        $content  = json_decode($response->getBody()->getContents());
+        if (!$content->status) {
+            return ['txid' => '', 'message' => $content->msg];
+        }
 
+        return ['txid' => $content->data];
     }
 
-    public function dealTransactions($address, array $transactions)
+    public function dealTransactions(array $transactions)
     {
         $received = [];
         foreach ($transactions as $transaction) {
             //过滤掉转出的
-            if ($transaction->type === 'received') {
-                array_push($received, [
-                    'received' => $address,
-                    'value'    => $transaction->amount,
-                    'hash'     => $transaction->hash,
-                ]);
-            }
+            array_push($received, [
+                'received' => $transaction->address,
+                'value'    => $transaction->money,
+                'hash'     => $transaction->hash,
+            ]);
+
         }
 
         return $received;

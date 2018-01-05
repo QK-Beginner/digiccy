@@ -19,6 +19,22 @@ class Wallet
      */
     public function __construct($config)
     {
+        if (!isset($config['ip'])) {
+            $config['ip'] = '127.0.0.1';
+        }
+        if (!isset($config['port'])) {
+            $config['port'] = '80';
+        }
+        if (!isset($config['url'])) {
+            $config['url'] = '';
+        }
+        if (!isset($config['user'])) {
+            $config['user'] = '';
+        }
+        if (!isset($config['password'])) {
+            $config['password'] = '';
+        }
+
         $this->config = $config;
     }
 

@@ -86,7 +86,7 @@ class ETHGateway implements GatewayInterface
             return $this->sendErc($params);
         } else {//以太坊
             //发送eth
-            return $this->sendEth();
+            return $this->sendEth($params);
         }
     }
 
@@ -167,8 +167,21 @@ class ETHGateway implements GatewayInterface
         return json_decode($content)->result;
     }
 
-    protected function sendEth()
+    protected function sendEth(array $params)
     {
+        //解锁账户
+        $this->rpcPost($this->config, 'personal_unlockAccount', [$from, $this->config['wallet_password']]);
+        //发送
+        $response = $this->rpcPost($this->config, 'eth_sendTransaction', [[
+            'from'  => $from,
+            'to'    => $this->info['contract'],//合约地址
+            //'gasPrice' => '0x4e3b29200',//燃气费
+            'value' => '0x0',
+        ]]);
+        $content  = $response->getBody()->getContents();
+        if (isset(json_decode($content, true)['error'])) exit($content);
+
+        return json_decode($content)->result;
 
     }
 
