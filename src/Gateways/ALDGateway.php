@@ -50,6 +50,7 @@ class ALDGateway implements GatewayInterface
         $response = $this->rpcPost($this->config, 'transfer',["uncoinex.com","$params[0]","$params[1]","ALD","$params[2]","true","0.12501","ALD"]);
         $result = json_decode($response->getBody()->getContents(),true);
         if($result){
+            sleep(2);
             $txid = $this->dealTransactionsOut($params[2]);
             return ['txid'=>$txid];
         }
@@ -58,7 +59,9 @@ class ALDGateway implements GatewayInterface
     //获取钱包可用总余额
     public function getWalletBalance()
     {
-
+        $response = $this->rpcPost($this->config,'list_account_balances',['uncoinex.com']);
+        $result = json_decode($response->getBody()->getContents(),true);
+        return ['balance'=>$result['result'][0]['amount']/100000];
     }
 
     //获取地址余额包含已经转出的
