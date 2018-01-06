@@ -136,9 +136,9 @@ class ETHGateway implements GatewayInterface
 
     protected function sendErc(array $params)
     {
-        $from    = $params[0];
-        $receive = $params[1];
-        $value   = $params[2];
+        $from    = $params['from'];
+        $receive = $params['to'];
+        $value   = $params['value'];
 
         //初始化数字格式
         $number = number_format($value * pow(10, $this->info['decimal']), 0, '', '');
@@ -148,7 +148,7 @@ class ETHGateway implements GatewayInterface
             exit('fail get hex');
         }
         //解锁账户
-        $this->rpcPost($this->config, 'personal_unlockAccount', [$from, $this->config['wallet_password']]);
+        $this->rpcPost($this->config, 'personal_unlockAccount', [$from, '123456']);
         //发送
         $receive = substr($receive, 2);
         $value   = str_pad($hex, 64, '0', STR_PAD_LEFT);
@@ -157,7 +157,7 @@ class ETHGateway implements GatewayInterface
         $response = $this->rpcPost($this->config, 'eth_sendTransaction', [[
             'from'  => $from,
             'to'    => $this->info['contract'],//合约地址
-            //'gasPrice' => '0x4e3b29200',//燃气费
+            //'gasPrice' => '0xc157b2700',//燃气费
             'value' => '0x0',
             'data'  => $data,
         ]]);
@@ -169,20 +169,26 @@ class ETHGateway implements GatewayInterface
 
     protected function sendEth(array $params)
     {
+        //初始化数字格式
+        $number = number_format($params['value'] * pow(10, 18), 0, '', '');
+        $url    = 'http://39.106.136.195:3000/index?dec=' . $number;//多位数转16进制接口
+        $hex    = json_decode($this->get($url)->getBody()->getContents())->hex;
+        if (!$hex) {
+            exit('fail get hex');
+        }
         //解锁账户
-        $this->rpcPost($this->config, 'personal_unlockAccount', [$from, $this->config['wallet_password']]);
+        $this->rpcPost($this->config, 'personal_unlockAccount', [$params['from'], '123456']);
         //发送
         $response = $this->rpcPost($this->config, 'eth_sendTransaction', [[
-            'from'  => $from,
-            'to'    => $this->info['contract'],//合约地址
+            'from'  => $params['from'],
+            'to'    => $params['to'],//合约地址
             //'gasPrice' => '0x4e3b29200',//燃气费
-            'value' => '0x0',
+            'value' => '0x' . $hex,
         ]]);
         $content  = $response->getBody()->getContents();
         if (isset(json_decode($content, true)['error'])) exit($content);
 
         return json_decode($content)->result;
-
     }
 
 
