@@ -25,16 +25,37 @@ class ALDGateway implements GatewayInterface
     //根据地址获取转账记录
     public function getTransactionsByAddress($userId)
     {
-        $result = $this->rpcPost($this->config, 'get_relative_account_history', ['uncoinex.com', 1, 10000, 10000]);
+        $result = $this->rpcPost($this->config, 'get_account_history', ['uncoinex.com',10000]);
         $result = json_decode($result->getBody()->getContents(), true);
         $unBackBlock = json_decode($this->rpcPost($this->config,'get_dynamic_global_properties',[])->getBody()->getContents(),true);
         $unBackBlock = $unBackBlock['result']['last_irreversible_block_num'];
         $received   = [];
         foreach ($result['result'] as $item){
-            if ($item['op']['op'][0] != 0) continue;//转账
-            if ($item['op']['op'][1]['to'] != '1.2.76144') continue;//转入
-            if ($item['op']['block_num'] > $unBackBlock) continue;//不可撤回
-            if ($item['memo'] != $userId) continue; //备注是否为用户id
+            if ($item['memo'] != $userId){
+                continue; //备注是否为用户id
+            }
+            if ($item['op']['op'][0] != 0){
+                continue;//转账
+            }
+            if ($item['op']['op'][1]['to'] != '1.2.76144'){
+                continue;//转入
+            }
+            if ($item['op']['block_num'] > $unBackBlock){
+                continue;//不可回撤;
+            }
+            // 根据ID 判断该交易所在的交易块位置
+            $object = $this->rpcPost($this->config,'get_object',[$item['op']['id']])->getBody()->getContents();
+            $object = json_decode($object,true);
+            if($object['result'][0]['op'][1]['to']!='1.2.76144'){
+                continue;//不可撤回
+            }
+            $trx_in_block = $object['result'][0]['trx_in_block'];
+            /*判断区块里的交易*/
+            $block = $this->rpcPost($this->config,'get_block',[$object['result'][0]['block_num']])->getBody()->getContents();
+            $block = json_decode($block,true);
+            if($block['result']['transactions'][$trx_in_block]['operations'][0][1]['to']!='1.2.76144'){
+                continue;
+            }
             array_push($received,[
                 'address' => $item['op']['op'][1]['from'], //转入的账户
                 'value'   => $item['op']['op'][1]['amount']['amount'] / 100000,
