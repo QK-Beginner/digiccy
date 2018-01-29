@@ -40,6 +40,9 @@ class ALDGateway implements GatewayInterface
             if ($item['op']['op'][1]['to'] != '1.2.76144'){
                 continue;//转入
             }
+            if($item['op']['op'][1]['amount']['asset_id']!=='1.3.6'){
+                continue;//转入的不是ald
+            }
             if ($item['op']['block_num'] > $unBackBlock){
                 continue;//不可回撤;
             }
